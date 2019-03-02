@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+<title>Item list</title>
+<style>
+  body {background-color: skyblue;
+        text-align: center;}
+  h1   {color: white;
+        text-align: center;
+        font-size: 100px;}
+  li   {color: white;
+        text-align: center;
+        list-style-type: none;
+        font-size: 40px;}
+</style>
+</head>
+
+<body>
+
+<h1>List of users</h1>
+<ul>
+  {{#each item}}
+  <li>Name:{{this.name}} <br> Description: {{this.description}}</li>
+  <br>
+  {{/each}}
+</ul>
+
+</body>
+</html>
