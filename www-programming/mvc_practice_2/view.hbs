@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+<title>Item list</title>
+<style>
+  body {background-color: skyblue;
+        text-align: center;}
+  h1   {color: white;
+        text-align: center;
+        font-size: 100px;}
+  li   {color: white;
+        text-align: center;
+        list-style-type: none;
+        font-size: 20px;}
+</style>
+</head>
+
+<body>
+
+<h1>List of users</h1>
+
+<form action="/users/add" method="post">
+  Username: <input type="text" name="username"><br>
+  Email: <input type="text" name="email"><br>
+  Password: <input type="password" name="password"><br> <input type="submit" value="Submit">
+</form>
+
+<ul>
+  {{#each item}}
+  <li>Username:{{this.username}} <br> Email: {{this.email}}</li>
+  <br>
+  {{/each}}
+</ul>
+
+</body>
+</html>
