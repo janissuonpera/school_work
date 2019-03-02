@@ -1,0 +1,19 @@
+You can use GET and POST on route /tasks
+You can also use GET on individual tasks by using their name in the route, for example: /tasks/walk%20the%20dog
+%20 works as a space in these urls.
+
+GET on /tasks also gives links to each individual task and GET to a specific task gives a link back to all tasks.
+
+When using POST, add a body of following form: { "name": "the name u want to give" }
+
+You can use DELETE on a individual task by using it in the route, for example /tasks/walk%20the%20dog
+
+You can use DELETE on route /tasks/deleteall to delete all tasks.
+
+You can use PUT on a specific route etc. /tasks/walk%20the%20dog to update its completion status. Put your status in the body of the request as such: { "status": "done"}. 
+PUT only accepts "done" and "not done" as status.
+
+You can create a new user with POST using route /user/signup. Use a following type of body: {"username": "xxx", "password": "yyyy"}
+You can login and get a token by sending a POST request to /user/signin. 
+
+To use routes that require authentication, pass the token in the body in raw json format: {"token": "xasdjasdiyadnauhd"}. Works for me in postmate
