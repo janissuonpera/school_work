@@ -1,0 +1,232 @@
+<html>
+<meta charset="utf-8" />
+<script src="https://unpkg.com/redux@latest/dist/redux.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/6.21.1/babel.min.js"></script>
+<script type="text/babel">
+const { createStore, combineReducers } = Redux;
+
+//Type constants
+const ADD_TASK = "ADD_TASK";
+const DELETE_TASK = "DELETE_TASK";
+const COMPLETE_TASK = "COMPLETE_TASK";
+const SELECT_TASK = "SELECT_TASK";
+
+//Running ID for tasks
+var ID = 0;
+
+//Initial State, only stores tasks in this implementation
+const initialState = {
+  tasks: [],
+  selected: {}
+}
+
+//Action creator for adding tasks. Only needs name and description as ID and completed
+//are generated later
+function addTask(name, description){
+  ID = ID + 1;
+  return{
+    type: ADD_TASK,
+    name,
+    description,
+  }
+}
+
+//Action creator for completing a task. But u also can toggle task completion with this
+//Payload is ID
+function completeTask(payload){
+  return{
+    type: COMPLETE_TASK,
+    payload
+  }
+}
+
+//Action creator for deleting a task, payload is ID
+function deleteTask(payload){
+  return{
+    type: DELETE_TASK,
+    payload
+  }
+}
+
+//Action creator for selecting a task, stores task state separately
+//payload is task ID
+function selectTask(payload){
+  return{
+    type: SELECT_TASK,
+    payload
+  }
+}
+
+//Reducer for selecting a task
+function select_reducer(state = initialState, action){
+  switch(action.type){
+    case SELECT_TASK:{
+      return {
+        selected: action.payload
+      }}
+    default:
+      return state
+  }
+}
+
+//Reducer for adding, completing and deleting a task
+function task_reducer(state = initialState, action){
+  switch(action.type){
+    case ADD_TASK:
+      //First copies the state with spread operator
+      //then adds the new task
+      return {
+          //...state,
+          tasks: [...state.tasks,
+          {
+            name: action.name,
+            description: action.description,
+            id: ID,
+            completed: false
+          }]
+        }
+    case DELETE_TASK:
+      //Copies the state, then filters out the task that matches actions payload/ID
+      return{
+          //...state,
+          tasks: [...state.tasks].filter(task=> task.id!==action.payload)
+        }
+    case COMPLETE_TASK:
+      //Copies the state, then finds the appropriate task with map-function
+      //and reverses its boolean value
+      return{
+          //...state,
+          tasks: [...state.tasks]
+          .map(task=> task.id === action.payload ? {...task, completed: !task.completed} : task)
+        }
+    //Returns default state is something went wrong
+    default:
+      return state
+  }
+}
+
+const taskApp = combineReducers({
+  all_tasks: task_reducer,
+  selected_task: select_reducer
+});
+
+//Create store with rootreducer
+const store = createStore(taskApp);
+
+//Subscribe to the store and console.log everytime something changes
+const unsubscribe = store.subscribe(() => console.log(store.getState()));
+
+store.dispatch(addTask("Do homework", "math, english, coding"));
+store.dispatch(addTask("Eat", "Grilled cheese sandwich or pizza hmmm"));
+
+//Updates the list at the top of the HTML body and adds buttons to it
+//with the names of the tasks
+function updateList(){
+  var tasks = store.getState().all_tasks.tasks;
+  //This clears all the child elements of output
+  //and prevents for-loop from adding same children again and again
+  //If you have a better solution, please let me know in the review :)
+  document.getElementById('output').innerHTML = '';
+  for(var x in tasks){
+    var button = document.createElement('input');
+    button.type = 'button';
+    button.value = tasks[x].name;
+    //button.target = selflink;
+    //Had to use bind with this to be able to send additional data with
+    //listener.
+    button.addEventListener('click', dispatchSelect.bind(event, tasks[x].id));
+    document.getElementById("output").appendChild(button);
+    document.getElementById("output").appendChild(document.createElement('br'));
+  }
+}
+
+function dispatchHelper(){
+  var task = document.getElementById("task");
+  //Remove previous task from display
+  task.innerHTML= "";
+  var selected = store.getState().selected_task.selected;
+  //Loops through all elements in the task object and adds them to task output
+  for(var x in selected){
+    task.innerHTML += "<h3 style='display: inline':>" + [x]  + ": </h3>  " + selected[x] + "<br />"
+  }
+  return selected;
+}
+
+
+//Listener function that dispatches a select command (called in function updateList)
+//A bit of spaghetti code in this function, sorry for that. This jumps between
+//the function above and this one and creates buttons here and there.
+function dispatchSelect(payload, event){
+  var tmp = store.getState().all_tasks.tasks
+  for(var x in tmp){
+    if(tmp[x].id === payload){
+      tmp = tmp[x]
+      break
+    }
+  }
+  store.dispatch(selectTask(tmp));
+  var selected = dispatchHelper()
+  //=================Button to complete task==================
+  if(selected["completed"]===false){
+    var button = document.createElement('input');
+    button.type = 'button';
+    button.value = "Complete task";
+    task.appendChild(button);
+    button.addEventListener('click', function(id, e){
+      //Dispatches complete action to tasks
+      store.dispatch(completeTask(id))
+      //Alter completed to true in task so it can be sent to task selector again
+      tmp = {...tmp, completed: true}
+      //Update selected task with the same payload but completed as true
+      store.dispatch(selectTask(tmp))
+      dispatchHelper()
+      deleteButton()
+    }.bind(event, selected["id"]))
+  }
+  deleteButton()
+  //==========================================================================
+}
+//===========Function that creates a button to delete task=============
+function deleteButton(){
+  var button2 = document.createElement('input');
+  button2.type = 'button';
+  button2.value = "Delete task";
+  task.appendChild(button2);
+  button2.addEventListener('click', function(id, e){
+    store.dispatch(deleteTask(id))
+    updateList()
+     document.getElementById("task").innerHTML = "";
+  }.bind(event, store.getState().selected_task.selected["id"]))
+}
+//=====================================================================
+
+//Triggered when user clicks 'Add'-button on page. Dispatches an action
+//that adds a new task to the store
+function add(){
+  var form = document.getElementById("taskForm");
+  store.dispatch(addTask(form.name.value, form.description.value));
+  updateList();
+}
+
+//On opening page, loads all the tasks as buttons in output id
+updateList();
+
+</script>
+
+<body>
+  <div id="add_task" align="center">
+    <p>Tasks:</p>
+    <div id="output"></div>
+    <br>
+    <div id="task"></div>
+    <hr>
+    <form id="taskForm">
+    Task name: <input type="text" name="name">
+    <br> Description: <input type="text" name="description">
+    </form>
+
+    <input id="add" type="button" value="Add" onclick="add();" />
+  </div>
+</body>
+
+</html>
